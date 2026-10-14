@@ -201,7 +201,6 @@ export default async function Legal({ params }: { params: Promise<{ locale: stri
         <p>Al contratar nos encargas preparar y presentar en tu nombre la comunicación anual de tus granjas en ECOGAN, y te comprometes a autorizarnos en ECOGAN para hacerlo. La persona autorizada que actúa en ECOGAN es:</p>
         <p className="rounded-xl bg-superficie p-4">
           {[op.nombre, op.apellido1, op.apellido2].filter(Boolean).join(" ") || "La persona que indicamos en tu área de cliente"}
-          {op.nif ? ` · NIF ${op.nif}` : ""}
           {op.email ? ` · ${op.email}` : ""}
         </p>
         <p>
