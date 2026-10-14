@@ -7,17 +7,22 @@ import { env } from "@/lib/env";
 import { avisarOperador, enlaceWhatsApp } from "@/lib/email";
 import { supabaseSistema } from "@/lib/supabase/server";
 
-export type EstadoReserva = { ok: true } | { ok: false; errores: Record<string, string>; general?: string } | null;
+export type EstadoReserva =
+  | { ok: true }
+  | { ok: false; errores: Record<string, string>; general?: string; valores: Record<string, string> }
+  | null;
 
 export async function reservarPlaza(_previo: EstadoReserva, form: FormData): Promise<EstadoReserva> {
   const entrada = Object.fromEntries(form.entries());
+  // Lo escrito se devuelve para volver a mostrarlo: React vacía el formulario tras enviarlo.
+  const valores = Object.fromEntries(Object.entries(entrada).filter(([k, v]) => k !== "web" && typeof v === "string")) as Record<string, string>;
   const r = esquemaReserva.safeParse({ ...entrada, aceptaPrivacidad: entrada.aceptaPrivacidad === "on" });
   if (!r.success) {
     const errores: Record<string, string> = {};
     for (const i of r.error.issues) errores[String(i.path[0])] ??= i.message;
     // Si solo falla el campo trampa, fingimos éxito para no dar pistas al robot.
     if (Object.keys(errores).length === 1 && errores.web) return { ok: true };
-    return { ok: false, errores };
+    return { ok: false, errores, valores };
   }
   const d = r.data;
   const idioma = String(entrada.idioma ?? "es");
@@ -38,7 +43,7 @@ export async function reservarPlaza(_previo: EstadoReserva, form: FormData): Pro
     });
     if (error) {
       console.error("Error guardando reserva", error);
-      return { ok: false, errores: {}, general: "No hemos podido guardar tu reserva. Llámanos o inténtalo de nuevo." };
+      return { ok: false, errores: {}, valores, general: "No hemos podido guardar tu reserva. Llámanos o inténtalo de nuevo." };
     }
   } else {
     console.info("[reserva en modo pruebas, no se guarda]", d);

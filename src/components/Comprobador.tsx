@@ -105,7 +105,13 @@ export function Comprobador({ onContratar }: { onContratar?: (especie?: string) 
               ["produccion", t("produccion")],
               ["reducida", t("reducida")],
               ["autoconsumo", t("autoconsumo")],
-              ["otra_especial", t("especial")],
+              // En porcino, tratantes y centros de concentración pueden estar obligados (informe MTD porcino 2024).
+              ...(esCerdo
+                ? ([
+                    ["tratante", "Tratante, centro de concentración o punto de parada"],
+                    ["otra_especial", "Otra especial (matadero, núcleo zoológico…)"],
+                  ] as [ClasificacionRega, string][])
+                : ([["otra_especial", t("especial")]] as [ClasificacionRega, string][])),
               ["cinegetica", t("cinegetica")],
               ["no_lo_se", "No lo sé"],
             ]}

@@ -18,6 +18,8 @@ export function FormReserva({ especieInicial }: { especieInicial?: string }) {
   const locale = useLocale();
   const [estado, accion, enviando] = useActionState<EstadoReserva, FormData>(reservarPlaza, null);
   const err = estado && !estado.ok ? estado.errores : {};
+  // Tras un error se vuelve a mostrar lo escrito (React vacía el formulario al enviarlo).
+  const v: Record<string, string> = estado && !estado.ok ? estado.valores : {};
 
   if (estado?.ok) {
     return (
@@ -34,6 +36,8 @@ export function FormReserva({ especieInicial }: { especieInicial?: string }) {
       </p>
     ) : null;
 
+  const especieMarcada = v.especie ?? especieInicial;
+
   return (
     <form action={accion} className="tarjeta space-y-5" noValidate>
       <input type="hidden" name="idioma" value={locale} />
@@ -46,22 +50,23 @@ export function FormReserva({ especieInicial }: { especieInicial?: string }) {
 
       <div>
         <label htmlFor="nombre" className="etiqueta">{t("nombre")}</label>
-        <input id="nombre" name="nombre" className="campo" autoComplete="name" required aria-invalid={!!err.nombre} aria-describedby="nombre-error" />
+        <input id="nombre" name="nombre" className="campo" autoComplete="name" defaultValue={v.nombre} required aria-invalid={!!err.nombre} aria-describedby="nombre-error" />
         {error("nombre")}
       </div>
       <div>
         <label htmlFor="telefono" className="etiqueta">{t("telefono")}</label>
-        <input id="telefono" name="telefono" type="tel" inputMode="tel" className="campo" autoComplete="tel" required aria-invalid={!!err.telefono} aria-describedby="telefono-error" />
+        <input id="telefono" name="telefono" type="tel" inputMode="tel" className="campo" autoComplete="tel" defaultValue={v.telefono} required aria-invalid={!!err.telefono} aria-describedby="telefono-error" />
         {error("telefono")}
       </div>
       <div>
         <label htmlFor="email" className="etiqueta">{t("email")}</label>
-        <input id="email" name="email" type="email" inputMode="email" className="campo" autoComplete="email" aria-invalid={!!err.email} aria-describedby="email-error" />
+        <input id="email" name="email" type="email" inputMode="email" className="campo" autoComplete="email" defaultValue={v.email} aria-invalid={!!err.email} aria-describedby="email-error" />
         {error("email")}
       </div>
       <div>
         <label htmlFor="comunidad" className="etiqueta">{t("comunidad")}</label>
-        <select id="comunidad" name="comunidad" className="campo" defaultValue="" required aria-invalid={!!err.comunidad} aria-describedby="comunidad-error">
+        {/* La key fuerza a montar de nuevo el desplegable para que recupere el valor tras un error. */}
+        <select key={v.comunidad ?? "vacio"} id="comunidad" name="comunidad" className="campo" defaultValue={v.comunidad ?? ""} required aria-invalid={!!err.comunidad} aria-describedby="comunidad-error">
           <option value="" disabled>{t("elige")}</option>
           {COMUNIDADES.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -72,9 +77,9 @@ export function FormReserva({ especieInicial }: { especieInicial?: string }) {
       <fieldset>
         <legend className="etiqueta">{t("especie")}</legend>
         <div className="grid gap-2 sm:grid-cols-2">
-          {[...ESPECIES, ["varias", t("varias")] as const].map(([v, nombre]) => (
-            <label key={v} className="opcion">
-              <input type="radio" name="especie" value={v} defaultChecked={v === especieInicial} className="size-5 accent-primario" required />
+          {[...ESPECIES, ["varias", t("varias")] as const].map(([valor, nombre]) => (
+            <label key={valor} className="opcion">
+              <input type="radio" name="especie" value={valor} defaultChecked={valor === especieMarcada} className="size-5 accent-primario" required />
               {nombre}
             </label>
           ))}
@@ -83,16 +88,16 @@ export function FormReserva({ especieInicial }: { especieInicial?: string }) {
       </fieldset>
       <div>
         <label htmlFor="numeroGranjas" className="etiqueta">{t("numeroGranjas")}</label>
-        <input id="numeroGranjas" name="numeroGranjas" type="number" inputMode="numeric" min={1} max={500} defaultValue={1} className="campo max-w-32" required aria-describedby="numeroGranjas-error" />
+        <input id="numeroGranjas" name="numeroGranjas" type="number" inputMode="numeric" min={1} max={500} defaultValue={v.numeroGranjas ?? 1} className="campo max-w-32" required aria-describedby="numeroGranjas-error" />
         {error("numeroGranjas")}
       </div>
       <div>
         <label htmlFor="mensaje" className="etiqueta">{t("mensaje")}</label>
-        <textarea id="mensaje" name="mensaje" rows={3} maxLength={1000} className="campo" />
+        <textarea id="mensaje" name="mensaje" rows={3} maxLength={1000} className="campo" defaultValue={v.mensaje} />
       </div>
       <div>
         <label className="flex items-start gap-3 text-base">
-          <input type="checkbox" name="aceptaPrivacidad" className="mt-1 size-6 shrink-0 accent-primario" required />
+          <input type="checkbox" name="aceptaPrivacidad" className="mt-1 size-6 shrink-0 accent-primario" defaultChecked={v.aceptaPrivacidad === "on"} required />
           <span>
             {t("privacidad")}{" "}
             <Link href="/legal#privacidad" className="underline">
