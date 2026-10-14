@@ -1,10 +1,14 @@
 {
   "name": "GranjaFácil",
   "short_name": "GranjaFácil",
-  "description": "Tu declaración ECOGAN hecha desde el móvil",
+  "description": "Tu declaración ECOGAN hecha desde el móvil. Un producto de KIVASA.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f7f6f1",
   "theme_color": "#2f6b2f",
-  "lang": "es"
+  "lang": "es",
+  "icons": [
+    { "src": "/marca/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/marca/icono-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }

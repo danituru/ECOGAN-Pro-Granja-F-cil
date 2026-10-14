@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -32,8 +33,9 @@ export default async function LayoutIdioma({ children, params }: { children: Rea
         <NextIntlClientProvider>
           <header className="border-b border-borde bg-superficie">
             <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-              <Link href="/" className="text-xl font-bold text-primario">
-                🌾 {t("marca")}
+              <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primario">
+                <Image src="/marca/granjafacil.png" alt="" width={44} height={44} className="rounded-lg" priority />
+                {t("marca")}
               </Link>
               <Link href="/#reserva" className="text-base font-semibold text-primario underline-offset-4 hover:underline">
                 Reservar plaza
@@ -44,7 +46,14 @@ export default async function LayoutIdioma({ children, params }: { children: Rea
             <p className="bg-aviso-fondo px-4 py-2 text-center text-sm text-aviso">{t("modoPruebas")}</p>
           )}
           <main className="mx-auto max-w-3xl px-4 py-6 sm:py-10">{children}</main>
-          <footer className="mx-auto max-w-3xl px-4 pb-10 text-sm text-texto-suave">
+          <footer className="mx-auto max-w-3xl space-y-4 border-t border-borde px-4 pt-6 pb-10 text-sm text-texto-suave">
+            <div className="flex items-center gap-4">
+              <Image src="/marca/kivasa.png" alt="KIVASA — Tecnología para el campo" width={96} height={88} />
+              <span className="text-base">
+                {pie("productoDe")} <strong className="text-primario-oscuro">KIVASA</strong>
+                <span className="block text-sm">{pie("lema")}</span>
+              </span>
+            </div>
             <p>{pie("texto")}</p>
             <p className="mt-2">
               <Link href="/legal" className="underline">
