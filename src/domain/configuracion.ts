@@ -29,11 +29,27 @@ export interface Configuracion {
     /** Días entre recordatorios. */
     cadaDias: number;
   };
+  /**
+   * Persona física que actúa como "Autorizado" en ECOGAN (ECOGAN exige DNI/NIE de una persona).
+   * Sus datos son los que el ganadero escribe en "Gestión de autorizados" y los del modelo de Aragón.
+   */
   operador: {
     nombre: string;
-    nif: string; // TODO: rellenar desde el panel; necesario para el modelo de autorización
+    apellido1: string;
+    apellido2: string;
+    nif: string;
     email: string;
     telefono: string;
+  };
+  /** Titular del servicio (responsable del tratamiento y quien factura). Aparece en las páginas legales. */
+  empresa: {
+    nombreComercial: string;
+    razonSocial: string;
+    nif: string;
+    domicilio: string;
+    email: string;
+    telefono: string;
+    registroMercantil: string;
   };
 }
 
@@ -56,7 +72,8 @@ export const CONFIG_POR_DEFECTO: Configuracion = {
     finPlazo: "2027-02-28",
   },
   recordatorios: { cadaDias: 3 },
-  operador: { nombre: "Daniel", nif: "", email: "", telefono: "" },
+  operador: { nombre: "Daniel", apellido1: "", apellido2: "", nif: "", email: "", telefono: "" },
+  empresa: { nombreComercial: "KIVASA", razonSocial: "", nif: "", domicilio: "", email: "", telefono: "", registroMercantil: "" },
 };
 
 export function texto(t: TextoIdiomas, idioma: Idioma): string {

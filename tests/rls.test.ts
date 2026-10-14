@@ -100,6 +100,58 @@ describe("aislamiento entre clientes", () => {
   });
 });
 
+describe("aislamiento de pagos, documentos, ayudas y reservas", () => {
+  const TA = "10000000-0000-0000-0000-00000000000a";
+  const TB = "10000000-0000-0000-0000-00000000000b";
+
+  beforeAll(async () => {
+    await db.exec(`
+      insert into public.pagos (titular_id, importe_centimos, estado) values ('${TA}', 12000, 'pagado'), ('${TB}', 18000, 'pagado');
+      insert into public.documentos (titular_id, tipo, ruta_storage, nombre) values
+        ('${TA}', 'justificante', '${TA}/j.pdf', 'justificante-a.pdf'),
+        ('${TB}', 'justificante', '${TB}/j.pdf', 'justificante-b.pdf');
+      insert into public.consentimientos (titular_id, tipo, version) values ('${TA}', 'terminos', 'v1'), ('${TB}', 'terminos', 'v1');
+      insert into public.reservas (nombre, telefono, comunidad, especie, numero_granjas, acepta_privacidad)
+        values ('Carla', '600000003', 'Aragón', 'porcino', 1, true);
+    `);
+  });
+
+  it("cada ganadero solo ve sus pagos, documentos y consentimientos", async () => {
+    expect((await como(A, "select importe_centimos from public.pagos")).rows).toEqual([{ importe_centimos: 12000 }]);
+    expect((await como(B, "select nombre from public.documentos")).rows).toEqual([{ nombre: "justificante-b.pdf" }]);
+    expect((await como(A, "select titular_id from public.consentimientos")).rows).toEqual([{ titular_id: TA }]);
+  });
+
+  it("un ganadero no puede subir documentos ni pedir ayuda a nombre de otro", async () => {
+    await expect(
+      como(A, `insert into public.documentos (titular_id, tipo, ruta_storage, nombre) values ('${TB}', 'foto', '${TB}/x.jpg', 'x.jpg')`),
+    ).rejects.toThrow(/row-level security/);
+    await expect(como(A, `insert into public.solicitudes_ayuda (titular_id, telefono) values ('${TB}', '600')`)).rejects.toThrow(/row-level security/);
+  });
+
+  it("un ganadero no puede subirse a sí mismo un justificante ni crearse pagos", async () => {
+    await expect(
+      como(A, `insert into public.documentos (titular_id, tipo, ruta_storage, nombre) values ('${TA}', 'justificante', '${TA}/f.pdf', 'f.pdf')`),
+    ).rejects.toThrow(/row-level security/);
+    await expect(como(A, `insert into public.pagos (titular_id, importe_centimos, estado) values ('${TA}', 1, 'pagado')`)).rejects.toThrow(/row-level security/);
+  });
+
+  it("las solicitudes de ayuda de uno no las ve otro", async () => {
+    await como(A, `insert into public.solicitudes_ayuda (titular_id, telefono) values ('${TA}', '600000001')`);
+    expect((await como(B, "select * from public.solicitudes_ayuda")).rows).toEqual([]);
+    expect((await como(OP, "select count(*)::int as n from public.solicitudes_ayuda")).rows[0]).toEqual({ n: 1 });
+  });
+
+  it("las reservas de la web solo las ve el operador", async () => {
+    expect((await como(A, "select * from public.reservas")).rows).toEqual([]);
+    expect((await como(OP, "select nombre from public.reservas")).rows).toEqual([{ nombre: "Carla" }]);
+  });
+
+  it("nadie puede avisar de la autorización de una granja ajena", async () => {
+    await expect(como(B, "select public.avisar_autorizacion('30000000-0000-0000-0000-00000000000a')")).rejects.toThrow(/No autorizado/);
+  });
+});
+
 describe("reglas de la campaña", () => {
   it("el ganadero puede guardar sus datos mientras se recogen", async () => {
     const r = await como(B, "update public.campanas set datos = '{\"actividad\":true}' where id = '30000000-0000-0000-0000-00000000000b'");

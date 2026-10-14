@@ -22,6 +22,8 @@ export const leerConfiguracion = cache(async (): Promise<Configuracion> => {
       textos: { ...CONFIG_POR_DEFECTO.textos, ...(guardada.textos ?? {}) },
       campana: { ...CONFIG_POR_DEFECTO.campana, ...(guardada.campana ?? {}) },
       operador: { ...CONFIG_POR_DEFECTO.operador, ...(guardada.operador ?? {}) },
+      empresa: { ...CONFIG_POR_DEFECTO.empresa, ...(guardada.empresa ?? {}) },
+      precios: { ...CONFIG_POR_DEFECTO.precios, ...(guardada.precios ?? {}) },
     };
   } catch {
     return CONFIG_POR_DEFECTO;

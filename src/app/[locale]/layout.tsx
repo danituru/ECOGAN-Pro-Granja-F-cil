@@ -37,9 +37,14 @@ export default async function LayoutIdioma({ children, params }: { children: Rea
                 <Image src="/marca/granjafacil.png" alt="" width={44} height={44} className="rounded-lg" priority />
                 {t("marca")}
               </Link>
-              <Link href="/#reserva" className="text-base font-semibold text-primario underline-offset-4 hover:underline">
-                Reservar plaza
-              </Link>
+              <nav className="flex items-center gap-4">
+                <Link href="/entrar" className="text-base font-semibold text-primario underline-offset-4 hover:underline">
+                  {t("entrar")}
+                </Link>
+                <Link href="/contratar" className="boton-peque border-primario font-semibold text-primario">
+                  {t("contratar")}
+                </Link>
+              </nav>
             </div>
           </header>
           {!hayBaseDeDatos() && (
@@ -57,7 +62,15 @@ export default async function LayoutIdioma({ children, params }: { children: Rea
             <p>{pie("texto")}</p>
             <p className="mt-2">
               <Link href="/legal" className="underline">
-                Términos y privacidad
+                Aviso legal, términos y privacidad
+              </Link>
+              {" · "}
+              <Link href="/legal#cookies" className="underline">
+                Cookies
+              </Link>
+              {" · "}
+              <Link href="/legal#seguridad" className="underline">
+                Seguridad
               </Link>
             </p>
           </footer>

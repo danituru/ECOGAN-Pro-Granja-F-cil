@@ -5,6 +5,9 @@ import { leerConfiguracion } from "@/lib/config-servidor";
 import { texto, type Idioma } from "@/domain/configuracion";
 import { euros } from "@/domain/precios";
 
+// Precios, textos y datos de empresa salen de la base de datos: se regeneran cada 5 minutos.
+export const revalidate = 300;
+
 export default async function Landing({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -25,13 +28,16 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
         <p className="text-xl text-texto-suave">{texto(config.textos.eslogan, idioma)}</p>
         <p className="rounded-xl bg-primario-claro p-4 text-lg">{texto(config.textos.mensajeObligacion, idioma)}</p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link href="/comprobador" className="boton">
+          <Link href="/contratar" className="boton">
+            {t("ctaContratar")}
+          </Link>
+          <Link href="/comprobador" className="boton-secundario">
             {t("ctaComprobar")}
           </Link>
-          <a href="#reserva" className="boton-secundario">
-            {tr("enviar")}
-          </a>
         </div>
+        <a href="#reserva" className="inline-block text-base text-primario underline">
+          {t("ctaLlamada")}
+        </a>
         <p className="text-base text-texto-suave">{t("plazo")}</p>
       </section>
 
@@ -80,6 +86,12 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
           <p className="text-base text-texto-suave">
             {t("sinActividad")} {euros(config.precios.sinActividad)}.
           </p>
+          <Link href="/legal#precios" className="block text-base text-primario underline">
+            Ver todos los precios
+          </Link>
+          <Link href="/contratar" className="boton w-full">
+            {t("ctaContratar")}
+          </Link>
         </div>
         <div className="tarjeta space-y-2">
           <h2 className="text-2xl font-bold">{t("garantiaTitulo")}</h2>
