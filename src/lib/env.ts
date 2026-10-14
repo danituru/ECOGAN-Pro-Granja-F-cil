@@ -8,6 +8,8 @@ export const env = {
   supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  /** Tipo impositivo de Stripe "IVA 21 %" incluido en el precio (txr_...), para desglosarlo en la factura. */
+  stripeIvaId: process.env.STRIPE_IVA_ID ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   emailFrom: process.env.EMAIL_FROM ?? "GranjaFácil <hola@example.com>",
   emailOperador: process.env.EMAIL_OPERADOR ?? "",

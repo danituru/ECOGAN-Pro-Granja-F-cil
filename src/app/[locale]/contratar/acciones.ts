@@ -127,13 +127,24 @@ export async function iniciarAlta(entrada: EntradaAlta): Promise<ResultadoAlta> 
     const descripcion = granjas
       .map((g) => `${g.rega} (${NOMBRE_ESPECIE[g.especie]}${g.sinActividad ? ", sin actividad" : ""})`)
       .join(", ");
+    // Cliente de Stripe con nombre y domicilio fiscal: la factura los necesita (RD 1619/2012).
+    const cliente = await stripe().customers.create({
+      email: a.email,
+      name: a.tipo === "juridica" ? a.nombre : `${a.nombre} ${a.apellidos ?? ""}`.trim(),
+      address: { line1: a.direccion, city: a.municipio, state: a.provincia, postal_code: a.codigoPostal, country: "ES" },
+      phone: a.telefono,
+      preferred_locales: ["es"],
+      metadata: { titular_id: titular.id },
+    });
     const sesion = await stripe().checkout.sessions.create({
       mode: "payment",
-      customer_email: a.email,
+      customer: cliente.id,
       locale: "es",
       line_items: [
         {
           quantity: 1,
+          // Tipo de IVA "incluido" creado en Stripe: el total no cambia y la factura desglosa base e IVA.
+          tax_rates: env.stripeIvaId ? [env.stripeIvaId] : undefined,
           price_data: {
             currency: "eur",
             unit_amount: presupuesto.total,
