@@ -128,14 +128,63 @@ export type Pantalla =
  */
 export function pantallas(datos: Datos, especie: Especie): Pantalla[] {
   const out: Pantalla[] = [];
+  const vistas = new Map<string, number>();
   recorrer(datos, especie, {
-    grupo: (v) => out.push({ tipo: "grupo", clave: v.ruta.join("/"), ...v }),
+    grupo: (v) => {
+      // Un mismo grupo puede aparecer dos veces (las balsas: paso 3 y paso 5); la clave debe ser única.
+      const base = v.ruta.join("/");
+      const n = (vistas.get(base) ?? 0) + 1;
+      vistas.set(base, n);
+      out.push({ tipo: "grupo", clave: n > 1 ? `${base}#${n}` : base, ...v });
+    },
     campo: (v) => {
       if (v.campo.tipo === "calculado") return;
       out.push({ tipo: "campo", clave: v.ruta.join("/"), ...v });
     },
   });
-  return out;
+  // Un grupo fijo sin ninguna pregunta visible (p. ej. ninguna balsa va al campo) no aporta nada.
+  return out.filter((p, i) => !(p.tipo === "grupo" && p.grupo.fijo && !(out[i + 1] && out[i + 1].ruta.length > p.ruta.length && empiezaPor(out[i + 1].ruta, p.ruta))));
+}
+
+function empiezaPor(ruta: Ruta, prefijo: Ruta) {
+  return prefijo.every((p, i) => ruta[i] === p);
+}
+
+/**
+ * Índice de la pantalla siguiente. Al terminar un elemento de un grupo (un alojamiento,
+ * un pienso…) se vuelve a la pantalla del grupo para poder añadir otro; desde la pantalla
+ * del grupo se salta por encima de sus elementos. Devuelve ps.length al acabar.
+ */
+export function indiceSiguiente(ps: Pantalla[], i: number): number {
+  const actual = ps[i];
+  if (!actual) return ps.length;
+  let j = i + 1;
+  if (actual.tipo === "grupo") {
+    while (j < ps.length && empiezaPor(ps[j].ruta, actual.ruta)) j++;
+  }
+  // Ruta del elemento que contiene la pantalla actual (o el grupo actual), si lo hay.
+  const rutaPropia = actual.tipo === "grupo" ? actual.ruta : actual.ruta.slice(0, -1);
+  const rutaElemento = rutaPropia.length % 2 === 0 ? rutaPropia : rutaPropia.slice(0, -1);
+  if (rutaElemento.length >= 2 && (j >= ps.length || !empiezaPor(ps[j].ruta, rutaElemento))) {
+    // Pantalla del grupo más cercana hacia atrás (el mismo grupo puede aparecer dos veces).
+    const rutaGrupo = rutaElemento.slice(0, -1);
+    for (let k = i; k >= 0; k--) {
+      const p = ps[k];
+      if (p.tipo === "grupo" && p.ruta.length === rutaGrupo.length && empiezaPor(p.ruta, rutaGrupo)) return k;
+    }
+  }
+  return j;
+}
+
+/**
+ * Índice de la primera pantalla de un elemento (para "Cambiar" o tras "Añadir"),
+ * buscando a partir de la pantalla del grupo desde la que se pide.
+ */
+export function indicePrimeraDeElemento(ps: Pantalla[], rutaElemento: Ruta, desde = 0): number {
+  for (let k = desde; k < ps.length; k++) {
+    if (ps[k].ruta.length > rutaElemento.length && empiezaPor(ps[k].ruta, rutaElemento)) return k;
+  }
+  return -1;
 }
 
 /** Valor efectivo: respuesta del ganadero, o el cálculo si el campo es calculado. */

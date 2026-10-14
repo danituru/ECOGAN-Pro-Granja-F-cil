@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pantallas, escribir, leer, anadirItem, progreso } from "@/domain/cuestionario";
+import { pantallas, escribir, leer, anadirItem, progreso, indiceSiguiente, indicePrimeraDeElemento } from "@/domain/cuestionario";
 import { validar, hayErrores } from "@/domain/validaciones";
 import { generarFicha } from "@/domain/ficha";
 import { resolverListas } from "@/domain/catalogo/opciones";
@@ -15,8 +15,7 @@ function granjaCebo(): Datos {
     anio_construccion: 2010,
     anio_inicio: 2011,
     almacenamientos_purin: [
-      { _id: "b1", identificador: "Balsa", tipo: "balsa", superficie: 800, capacidad: 2400, dias_permanencia: 120, destino_campo_pct: 100, destino_gestor_pct: 0, destino_otros_pct: 0, aplicacion_programa_abonado: true, aplicacion_tecnicas: [{ _id: "t1", tecnica: "bandas_tubos", tiempo_enterrado: "antes_4h", apero: "grada", pct: 100 }] },
-    ],
+      { _id: "b1", identificador: "Balsa", tipo: "balsa", superficie: 800, capacidad: 2400, dias_permanencia: 120, destino_campo_pct: 100, destino_gestor_pct: 0, destino_otros_pct: 0, aplicacion_programa_abonado: true, aplicacion_tecnicas: [{ _id: "t1", tecnica: "bandas_tubos", tiempo_enterrado: "antes_4h", apero: "grada", pct: 100 }] },    ],
     almacenamientos_estiercol: [],
     alojamientos: [
       {
@@ -96,6 +95,56 @@ describe("cuestionario", () => {
     expect(leer(d, ["alojamientos", "a1", "plazas"])).toBe(1469);
     const { datos: d3, id } = anadirItem(d2, ["alojamientos", "a1", "piensos"], { nombre: "Inicio" });
     expect(leer(d3, ["alojamientos", "a1", "piensos", id, "nombre"])).toBe("Inicio");
+  });
+
+  it("navegación: al acabar un pienso vuelve a la lista de piensos, y de ahí sigue dentro del alojamiento", () => {
+    const d = granjaCebo();
+    const ps = pantallas(d, "porcino");
+    const idx = (clave: string) => ps.findIndex((p) => p.clave === clave);
+    // Último campo del primer pienso → pantalla del grupo de piensos.
+    expect(ps[indiceSiguiente(ps, idx("alojamientos/a1/piensos/p1/kg_despues"))].clave).toBe("alojamientos/a1/piensos");
+    // Desde el grupo de piensos se salta a lo que va después de los piensos, en el mismo alojamiento.
+    const tras = ps[indiceSiguiente(ps, idx("alojamientos/a1/piensos"))];
+    expect(tras.clave.startsWith("alojamientos/a1/")).toBe(true);
+    expect(tras.clave.includes("/piensos/")).toBe(false);
+    // Desde el grupo de alojamientos se salta por encima de todos ellos.
+    const trasAloj = ps[indiceSiguiente(ps, idx("alojamientos"))];
+    expect(trasAloj.clave.startsWith("alojamientos")).toBe(false);
+    // Primera pantalla de un elemento.
+    expect(ps[indicePrimeraDeElemento(ps, ["alojamientos", "a1"])].clave).toBe("alojamientos/a1/identificador");
+  });
+
+  it("al acabar lo último de un alojamiento vuelve a la lista de alojamientos (pasando por las listas anidadas)", () => {
+    const ps = pantallas(granjaCebo(), "porcino");
+    const idx = (clave: string) => ps.findIndex((p) => p.clave === clave);
+    // Último campo del reparto entre balsas → lista del reparto.
+    expect(ps[indiceSiguiente(ps, idx("alojamientos/a1/distribucion_purin/d1/pct"))].clave).toBe("alojamientos/a1/distribucion_purin");
+    // El reparto es lo último del alojamiento → lista de alojamientos.
+    expect(ps[indiceSiguiente(ps, idx("alojamientos/a1/distribucion_purin"))].clave).toBe("alojamientos");
+  });
+
+  it("las balsas aparecen dos veces (paso 3 y paso 5) sin confundir la navegación", () => {
+    const d = granjaCebo();
+    const ps = pantallas(d, "porcino");
+    const claves = ps.map((p) => p.clave);
+    expect(new Set(claves).size).toBe(claves.length);
+    const iAloj = claves.indexOf("alojamientos");
+    const iPaso5 = claves.indexOf("almacenamientos_purin#2");
+    expect(iPaso5).toBeGreaterThan(iAloj);
+    // Desde la lista de alojamientos se avanza hacia delante, nunca a las balsas del paso 3.
+    expect(indiceSiguiente(ps, iAloj)).toBe(iPaso5);
+    // "Cambiar" en el paso 5 abre las preguntas del paso 5 de esa balsa.
+    expect(ps[indicePrimeraDeElemento(ps, ["almacenamientos_purin", "b1"], iPaso5)].clave).toBe("almacenamientos_purin/b1/aplicacion_desconoce");
+    // Al acabar la última técnica: lista de técnicas → lista de balsas del paso 5.
+    const ultimo = claves.indexOf("almacenamientos_purin/b1/aplicacion_tecnicas/t1/pct");
+    const listaTecnicas = indiceSiguiente(ps, ultimo);
+    expect(ps[listaTecnicas].clave).toBe("almacenamientos_purin/b1/aplicacion_tecnicas");
+    expect(ps[indiceSiguiente(ps, listaTecnicas)].clave).toBe("almacenamientos_purin#2");
+  });
+
+  it("un grupo fijo sin preguntas visibles no se muestra", () => {
+    const d = escribir(granjaCebo(), ["almacenamientos_purin", "b1", "destino_campo_pct"], 0);
+    expect(pantallas(d, "porcino").some((p) => p.clave === "almacenamientos_purin#2")).toBe(false);
   });
 
   it("progreso cuenta solo obligatorios visibles", () => {
