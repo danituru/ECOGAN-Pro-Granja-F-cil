@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { supabaseSistema, supabaseUsuario } from "@/lib/supabase/server";
-import { enviarEnlaceAcceso } from "@/lib/acceso";
+import { enviarEnlaceAcceso, obtenerOCrearUsuario } from "@/lib/acceso";
 import { env } from "@/lib/env";
 import { redirect } from "next/navigation";
 
@@ -22,6 +22,11 @@ export async function pedirEnlace(_previo: EstadoEntrar, form: FormData): Promis
   const esOperador = !!env.emailOperador && email.data === env.emailOperador.toLowerCase();
   if (titular || esOperador) {
     try {
+      if (esOperador) {
+        // El correo de EMAIL_OPERADOR (variable de Vercel que solo controla el operador) entra al panel.
+        const { id } = await obtenerOCrearUsuario(email.data);
+        await db.from("perfiles").upsert({ id, rol: "admin" });
+      }
       await enviarEnlaceAcceso(email.data, titular?.nombre ?? "", "Has pedido entrar en tu área de GranjaFácil.", esOperador && !titular ? "/admin" : "/mi-area");
     } catch (e) {
       console.error("No se pudo enviar el enlace", e);
