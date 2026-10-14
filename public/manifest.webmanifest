@@ -1,0 +1,10 @@
+{
+  "name": "GranjaFácil",
+  "short_name": "GranjaFácil",
+  "description": "Tu declaración ECOGAN hecha desde el móvil",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f1",
+  "theme_color": "#2f6b2f",
+  "lang": "es"
+}

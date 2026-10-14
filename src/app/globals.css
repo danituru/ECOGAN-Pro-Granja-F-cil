@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/*
+ * Pensado para el ganadero: letra grande (mínimo 16 px, 18 px por defecto), botones grandes
+ * y alto contraste. Colores como variables para poder ajustar la marca sin tocar componentes.
+ */
+:root {
+  --fondo: #f7f6f1;
+  --superficie: #ffffff;
+  --texto: #1d2418;
+  --texto-suave: #4c5646;
+  --primario: #2f6b2f;
+  --primario-oscuro: #224f22;
+  --primario-claro: #e3efdc;
+  --acento: #b5651d;
+  --aviso: #8a5a00;
+  --aviso-fondo: #fff4d6;
+  --error: #a32020;
+  --error-fondo: #fde8e8;
+  --borde: #d6d9cf;
+}
+
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-primario: var(--primario);
+  --color-primario-oscuro: var(--primario-oscuro);
+  --color-primario-claro: var(--primario-claro);
+  --color-acento: var(--acento);
+  --color-aviso: var(--aviso);
+  --color-aviso-fondo: var(--aviso-fondo);
+  --color-error: var(--error);
+  --color-error-fondo: var(--error-fondo);
+  --color-borde: var(--borde);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+@layer components {
+  .boton {
+    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-primario px-6 py-3 text-lg font-semibold text-white shadow-sm transition hover:bg-primario-oscuro focus:outline-none focus-visible:ring-4 focus-visible:ring-primario/40 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .boton-secundario {
+    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-xl border-2 border-primario bg-superficie px-6 py-3 text-lg font-semibold text-primario transition hover:bg-primario-claro focus:outline-none focus-visible:ring-4 focus-visible:ring-primario/40 disabled:opacity-50;
+  }
+  .boton-peque {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-borde bg-superficie px-4 py-2 text-base font-medium text-texto hover:bg-fondo;
+  }
+  .campo {
+    @apply block w-full rounded-xl border-2 border-borde bg-superficie px-4 py-3 text-lg text-texto placeholder:text-texto-suave/70 focus:border-primario focus:outline-none focus:ring-4 focus:ring-primario/20;
+  }
+  .etiqueta {
+    @apply mb-2 block text-lg font-semibold;
+  }
+  .tarjeta {
+    @apply rounded-2xl border border-borde bg-superficie p-5 shadow-sm sm:p-6;
+  }
+  .opcion {
+    @apply flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl border-2 border-borde bg-superficie px-4 py-3 text-left text-lg transition hover:border-primario has-[:checked]:border-primario has-[:checked]:bg-primario-claro;
+  }
+}
