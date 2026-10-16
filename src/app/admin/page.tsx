@@ -46,7 +46,10 @@ export default async function PanelAdmin({ searchParams }: { searchParams: Promi
     <div className="space-y-8">
       {faltan.length > 0 && (
         <p className="tarjeta border-aviso bg-aviso-fondo text-base text-aviso">
-          Faltan datos en la configuración (tabla <code>configuracion</code>, claves <code>empresa</code> y <code>operador</code>): {faltan.join(", ")}. Salen en las páginas legales, en la guía de autorización y en el modelo de Aragón.
+          Faltan datos: {faltan.join(", ")}. Salen en las páginas legales, en la guía de autorización y en el modelo de Aragón.{" "}
+          <Link href="/admin/configuracion" className="font-semibold underline">
+            Completarlos en Configuración
+          </Link>
         </p>
       )}
       <section className="grid gap-3 sm:grid-cols-4">

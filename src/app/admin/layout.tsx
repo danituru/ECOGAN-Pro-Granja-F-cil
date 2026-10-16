@@ -36,6 +36,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
             </Link>
             <Link href="/admin" className="hover:underline">Campañas</Link>
             <Link href="/admin/reservas" className="hover:underline">Reservas</Link>
+            <Link href="/admin/configuracion" className="hover:underline">Configuración</Link>
             {/* Es una descarga (route handler), no una página: enlace normal. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/admin/exportar" download className="hover:underline">Exportar CSV</a>

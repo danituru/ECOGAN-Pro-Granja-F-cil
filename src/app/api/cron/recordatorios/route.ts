@@ -5,6 +5,8 @@ import { enviarEnlaceAcceso } from "@/lib/acceso";
 import { avisarOperador } from "@/lib/email";
 import { leerConfiguracion } from "@/lib/config-servidor";
 import { ESTADOS_CON_RECORDATORIO, type EstadoCampana } from "@/domain/estados";
+import { componerResumen } from "@/domain/resumen";
+import type { Configuracion } from "@/domain/configuracion";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -31,16 +33,24 @@ export async function GET(request: NextRequest) {
   if (!hayBaseDeDatos()) return NextResponse.json({ enviados: 0, motivo: "sin base de datos" });
 
   const config = await leerConfiguracion();
-  const ahora = Date.now();
-  if (ahora > new Date(`${config.campana.finPlazo}T23:59:59`).getTime()) return NextResponse.json({ enviados: 0, motivo: "plazo cerrado" });
+  const plazoAbierto = Date.now() <= new Date(`${config.campana.finPlazo}T23:59:59`).getTime();
+  const resultado = plazoAbierto ? await enviarRecordatorios(config) : { enviados: 0, fallos: 0 };
+  if ("error" in resultado) return NextResponse.json(resultado, { status: 500 });
 
+  // Resumen diario para el operador (también fuera de plazo: puede quedar trabajo pendiente).
+  const resumen = await resumenOperador(config, resultado);
+  return NextResponse.json({ ...resultado, resumen });
+}
+
+async function enviarRecordatorios(config: Configuracion): Promise<{ enviados: number; fallos: number } | { error: string }> {
+  const ahora = Date.now();
   const sistema = supabaseSistema();
   const { data, error } = await sistema
     .from("campanas")
     .select("id, estado, creado_en, ultimo_recordatorio_en, recordatorios_enviados, autorizacion_avisada_en, granja:granjas(rega, nombre, titular:titulares(id, nombre, email))")
     .in("estado", ESTADOS_CON_RECORDATORIO)
     .not("pagado_en", "is", null);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return { error: error.message };
 
   const intervalo = Math.max(1, config.recordatorios.cadaDias) * 86_400_000 - 3_600_000; // margen de 1 h por la hora del cron
   const tocan = ((data ?? []) as unknown as Fila[]).filter((c) => {
@@ -92,8 +102,49 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (fallos.length > 0) {
-    await avisarOperador("Recordatorios que no se han podido enviar", `No se han podido enviar ${fallos.length} recordatorios:\n${fallos.join("\n")}\n\nRevisa Resend (dominio verificado y clave).`).catch(() => {});
-  }
-  return NextResponse.json({ enviados, fallos: fallos.length });
+  if (fallos.length > 0) console.error("Recordatorios no enviados:", fallos.join(", "));
+  return { enviados, fallos: fallos.length };
 }
+
+type FilaResumen = { id: string; estado: EstadoCampana; autorizacion_avisada_en: string | null; granja: { rega: string; nombre: string | null; titular: { nombre: string; apellidos: string | null; telefono: string } } };
+
+async function resumenOperador(config: Configuracion, recordatorios: { enviados: number; fallos: number }): Promise<"enviado" | "nada pendiente" | "error"> {
+  const sistema = supabaseSistema();
+  const [{ data: campanas }, { data: ayudas }, { count: reservas }] = await Promise.all([
+    sistema
+      .from("campanas")
+      .select("id, estado, autorizacion_avisada_en, granja:granjas(rega, nombre, titular:titulares(nombre, apellidos, telefono))")
+      .in("estado", ["autorizacion_pendiente", "pendiente_revision", "lista_para_ecogan", "comunicada"]),
+    sistema.from("solicitudes_ayuda").select("id, telefono, mensaje, titular:titulares(nombre)").is("atendida_en", null),
+    sistema.from("reservas").select("id", { count: "exact", head: true }).is("contactado_en", null),
+  ]);
+  const cs = (campanas ?? []) as unknown as FilaResumen[];
+  const item = (c: FilaResumen) => ({ id: c.id, texto: `${c.granja.titular.nombre} ${c.granja.titular.apellidos ?? ""}`.trim() + ` · ${c.granja.nombre || c.granja.rega} · ${c.granja.titular.telefono}` });
+  const de = (estado: EstadoCampana) => cs.filter((c) => c.estado === estado).map(item);
+
+  const r = componerResumen({
+    base: env.appUrl.replace(/\/$/, ""),
+    diasFinPlazo: diasHasta(config.campana.finPlazo),
+    diasGarantia: diasHasta(config.campana.limiteGarantia),
+    ayudas: (ayudas ?? []).map((a) => {
+      const nombre = (a.titular as unknown as { nombre: string } | null)?.nombre ?? "";
+      return { id: a.id, texto: `${nombre} · ${a.telefono ?? ""}${a.mensaje ? ` · «${a.mensaje}»` : ""}` };
+    }),
+    porVerificar: cs.filter((c) => c.estado === "autorizacion_pendiente" && c.autorizacion_avisada_en).map(item),
+    porRevisar: de("pendiente_revision"),
+    paraEcogan: de("lista_para_ecogan"),
+    sinJustificante: de("comunicada"),
+    reservasSinLlamar: reservas ?? 0,
+    recordatorios,
+  });
+  if (!r) return "nada pendiente";
+  try {
+    await avisarOperador(r.asunto, r.texto);
+    return "enviado";
+  } catch (e) {
+    console.error("Resumen diario no enviado", e);
+    return "error";
+  }
+}
+
+const diasHasta = (fecha: string) => Math.ceil((new Date(`${fecha}T23:59:59`).getTime() - Date.now()) / 86_400_000);
