@@ -90,6 +90,40 @@ function GuiaClave(p: Props) {
   );
 }
 
+// TODO: verificar normativa — vías de registro en Cl@ve según clave.gob.es; revisar cada campaña por si cambian.
+function SinClave({ esEmpresa }: { esEmpresa: boolean }) {
+  return (
+    <details className="tarjeta">
+      <summary className="cursor-pointer text-lg font-semibold text-primario">¿No tienes Cl@ve? Cómo sacarla</summary>
+      <div className="mt-3 space-y-3 text-lg">
+        <p>
+          Cl@ve es el sistema del Gobierno para identificarte por internet. Es gratis y solo te registras una vez. Si ya la usas para la renta o la Seguridad Social, ya la tienes.
+          {esEmpresa && " Como la granja es de una empresa, la Cl@ve tiene que ser de la persona que la representa."}
+        </p>
+        <ol className="space-y-3">
+          <li className="rounded-xl bg-fondo p-3">
+            <strong>1. Desde el móvil (lo más rápido).</strong> Descarga la app oficial «Cl@ve» en tu móvil (Android o iPhone), pulsa registrarte y sigue los pasos. Te identificas con tu DNI: acercándolo al móvil si es electrónico, o por videollamada.
+          </li>
+          <li className="rounded-xl bg-fondo p-3">
+            <strong>2. Con una carta a casa.</strong> Pide la «carta de invitación» en{" "}
+            <a href="https://clave.gob.es" target="_blank" rel="noopener" className="underline">
+              clave.gob.es
+            </a>
+            . Te llega por correo postal en unos días con un código para terminar el registro.
+          </li>
+          <li className="rounded-xl bg-fondo p-3">
+            <strong>3. En persona.</strong> En una oficina de la Agencia Tributaria o de la Seguridad Social, con tu DNI. Pide cita antes.
+          </li>
+        </ol>
+        <p>
+          También vale un <strong>certificado digital</strong> instalado en tu ordenador, por ejemplo si te lo hizo tu cooperativa o tu gestoría.
+        </p>
+        <p className="text-base text-texto-suave">Si te lías, pulsa «Necesito ayuda» abajo y lo hacemos contigo por teléfono.</p>
+      </div>
+    </details>
+  );
+}
+
 export function Autorizacion(p: Props) {
   const [ayuda, setAyuda] = useState(false);
   const [telefono, setTelefono] = useState(p.telefono);
@@ -158,13 +192,7 @@ export function Autorizacion(p: Props) {
       {verClave && (
         <section className="space-y-4">
           <h2 className="text-2xl font-bold">{p.viaDocumento ? "Alternativa: con tu Cl@ve en ECOGAN" : "Autorízanos en ECOGAN con tu Cl@ve"}</h2>
-          <p className="rounded-xl bg-fondo p-3 text-base">
-            ¿No tienes Cl@ve ni certificado? Puedes registrarte en Cl@ve desde el móvil, con videollamada, en{" "}
-            <a href="https://clave.gob.es" target="_blank" rel="noopener" className="underline">
-              clave.gob.es
-            </a>
-            . Si te lía, pulsa «Necesito ayuda» y te llamamos.
-          </p>
+          <SinClave esEmpresa={p.esEmpresa} />
           <GuiaClave {...p} />
           {!p.yaAvisado && (
             <button
