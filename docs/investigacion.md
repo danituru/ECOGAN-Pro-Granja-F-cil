@@ -61,7 +61,11 @@ Estado de la fase 0:
 - Responsabilidad: "la responsabilidad del contenido de la declaración se mantiene en el perfil ganadero/representante legal". La comunicación es una **declaración responsable** del titular.
 - El MAPA reconoce el problema: "algunos ganaderos no están familiarizados con la tecnología digital" y la delegación "no se ha realizado correctamente". **Este es el verdadero cuello de botella del servicio.**
 
-**Por confirmar (TODO):** qué CCAA ofrecen la vía 2 y con qué documento. Prioridad: Aragón, Cataluña, Castilla y León, Murcia, Andalucía y Galicia.
+**Confirmado:**
+- **Aragón** ofrece la vía 2: el modelo del MAPA firmado se envía a ecogan@aragon.es.
+- **Cataluña no la ofrece.** Lo confirma por correo el Servei de Gestió Mediambiental Agrària (Departament d'Agricultura, 16-oct-2026): el titular, o su representante si es persona jurídica, autoriza al técnico desde la propia aplicación ECOGAN. "Actualmente no existe un procedimiento equivalente al modelo de Aragón."
+
+**Por confirmar (TODO):** qué otras CCAA ofrecen la vía 2 y con qué documento. Prioridad: Castilla y León, Murcia, Andalucía y Galicia.
 
 ## 4. Granjas integradas
 
